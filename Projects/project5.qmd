@@ -1,7 +1,7 @@
 ---
-title: "Client Report - [Insert Project Title]"
+title: "Client Report - Project 05"
 subtitle: "Course DS 250"
-author: "[STUDENT NAME]"
+author: "Tad Decker"
 format:
   html:
     self-contained: true
@@ -25,4 +25,327 @@ execute:
     
 ---
 
-### Paste in a template
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import random
+```
+
+## Elevator pitch
+
+Through cleaning and organizing the information given, I was able to create a model that can predict whether an individual's income is above or below $50,000, although with not a very high accuracy.
+
+```{python}
+#| label: project data
+#| code-summary: Read and format project data
+df = pd.read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/star-wars-survey/StarWars.csv", encoding='unicode_escape')
+```
+
+## 1. Clean table
+
+Shorten the column names and clean them up for easier use with pandas. Provide a table or list that exemplifies how you fixed the names.
+
+The following list gives the list of each column, and associated qualities.
+
+```{python}
+#| label: Q1 chart
+#| code-summary: Clean data
+#| fig-cap: "My useless chart"
+#| fig-align: center
+
+# Create an empty dataframe
+df2 = pd.DataFrame()
+
+# Drop the first row: they're just column headers.
+df = df.iloc[1: , :]
+
+# Don't save Id, we don't care about it
+
+# seen_film (Seen ANY of the star wars movies)
+df2['seen_film'] = df['Have you seen any of the 6 films in the Star Wars franchise?'].map(
+  lambda x: True if x == "Yes" else False if x == "No" else False )
+
+# isFan
+df2['is_fan'] = df['Do you consider yourself to be a fan of the Star Wars film franchise?'].map(
+  lambda x: True if x == "Yes" else False if x == "No" else False )
+
+# Episode 1
+df2['ep_1'] = df['Which of the following Star Wars films have you seen? Please select all that apply.'].map(
+  lambda x: True if x == "Star Wars: Episode I  The Phantom Menace" else False
+)
+
+# Episode 2
+df2['ep_2'] = df['Unnamed: 4'].map(
+  lambda x: True if x == "Star Wars: Episode II  Attack of the Clones" else False
+)
+
+# Episode 3
+df2['ep_3'] = df['Unnamed: 5'].map(
+  lambda x: True if x == "Star Wars: Episode III  Revenge of the Sith" else False
+)
+
+# Episode 4
+df2['ep_4'] = df['Unnamed: 6'].map(
+  lambda x: True if x == "Star Wars: Episode IV  A New Hope" else False
+)
+
+# Episode 5
+df2['ep_5'] = df['Unnamed: 7'].map(
+  lambda x: True if x == "Star Wars: Episode V The Empire Strikes Back" else False
+)
+
+# Episode 6
+df2['ep_6'] = df['Unnamed: 8'].map(
+  lambda x: True if x == "Star Wars: Episode VI Return of the Jedi" else False
+)
+
+# Episode rank. Replace nan values with 3
+
+# Episode 1 rank
+df2['ep_1_rank'] = df['Please rank the Star Wars films in order of preference with 1 being your favorite film in the franchise and 6 being your least favorite film.'].fillna(3).astype(int)
+
+# Episode 2 rank
+df2['ep_2_rank'] = df['Unnamed: 10'].fillna(3).astype(int)
+
+# Episode 3 rank
+df2['ep_3_rank'] = df['Unnamed: 11'].fillna(3).astype(int)
+
+# Episode 4 rank
+df2['ep_4_rank'] = df['Unnamed: 12'].fillna(3).astype(int)
+
+# Episode 5 rank
+df2['ep_5_rank'] = df['Unnamed: 13'].fillna(3).astype(int)
+
+# Episode 6 rank
+df2['ep_6_rank'] = df['Unnamed: 14'].fillna(3).astype(int)
+
+def shortenOpinion(opinion):
+  if (opinion == "Very favorably"):
+    return "5"
+  elif (opinion == "Somewhat favorably"):
+    return "4"
+  elif (opinion == "Neither favorably nor unfavorably (neutral)"):
+    return "3"
+  elif (opinion == "Somewhat unfavorably"):
+    return "2"
+  elif (opinion == "Very unfavorably"):
+    return "1"
+  else: # "Unfamiliar (N/A)"
+    return "0"
+
+# Character favorability
+df2['han'] = df['Please state whether you view the following characters favorably, unfavorably, or are unfamiliar with him/her.'].map(lambda x: shortenOpinion(x))
+df2['luke'] = df['Unnamed: 16'].map(lambda x: shortenOpinion(x))
+df2['leia'] = df['Unnamed: 17'].map(lambda x: shortenOpinion(x))
+df2['anakin'] = df['Unnamed: 18'].map(lambda x: shortenOpinion(x))
+df2['obi_wan'] = df['Unnamed: 19'].map(lambda x: shortenOpinion(x))
+df2['palp'] = df['Unnamed: 20'].map(lambda x: shortenOpinion(x))
+df2['vader'] = df['Unnamed: 21'].map(lambda x: shortenOpinion(x))
+df2['lando'] = df['Unnamed: 22'].map(lambda x: shortenOpinion(x))
+df2['boba'] = df['Unnamed: 23'].map(lambda x: shortenOpinion(x))
+df2['c-3p0'] = df['Unnamed: 24'].map(lambda x: shortenOpinion(x))
+df2['r2_d2'] = df['Unnamed: 25'].map(lambda x: shortenOpinion(x))
+df2['jar_jar'] = df['Unnamed: 26'].map(lambda x: shortenOpinion(x))
+df2['padme'] = df['Unnamed: 27'].map(lambda x: shortenOpinion(x))
+df2['yoda'] = df['Unnamed: 28'].map(lambda x: shortenOpinion(x))
+
+# Who shot first?
+# Fill nan values with "I don't understand this question"
+df2['first'] = df['Which character shot first?'].fillna("I don't understand this question").astype(str)
+
+# Expanded universe?
+# If nan, replace with "No"
+df2['eu'] = df['Are you familiar with the Expanded Universe?'].fillna('No').astype(str)
+
+# Ignore star trek column
+
+# Change column titles; we'll modify them more later
+# If value is nan, assign to one of the values randomly.
+df2['gender'] = df['Gender'].fillna(random.choice(["Male", "Female"]))
+df2['age'] = df['Age'].fillna(random.choice(['18-29', '30-44', '> 60', '45-60']))
+df2['income'] = df['Household Income'].fillna(random.choice(['$0 - $24,999', '$25,000 - $49,999', '$50,000 - $99,999', '$100,000 - $149,999', '$150,000+']))
+df2['education'] = df['Education'].fillna(random.choice(['High school degree', 'Some college or Associate degree', 'Bachelor degree', 'Graduate degree', 'Less than high school degree']))
+df2['location'] = df['Location (Census Region)'].fillna(random.choice(['South Atlantic', 'Pacific', 'Mountain', 'East North Central', 'West South Central', 'New England', 'Middle Atlantic', 'West North Central', 'East South Central']))
+
+df2.info()
+```
+
+## 2. Clean and format data
+
+Clean and format the data so that it can be used in a machine learning model. As you format the data, you should complete each item listed below. In your final report provide example(s) of the reformatted data with a short description of the changes made.
+
+  a. Filter the dataset to respondents that have seen at least one film.
+
+  We removed every respondent that HAS NOT seen at least ONE film. Some of the entries marked themselves as "Yes", though they did not mark any of the films as seen, so we dropped those as well.
+
+```{python}
+#| label: Filter dataset
+#| code-summary: Filter dataset
+
+# 1186
+
+df2 = df2[(df2['seen_film'] == True) & (df2[['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6']].any(axis=1))]
+
+(len(df2.index) / 1186)
+
+male_seen = df2[df2['gender'] == 'Male']
+male_total = df[df['Gender'] == 'Male']
+(len(male_seen.index) / len(male_total.index))
+```
+
+  b. Create a new column that converts the age ranges to a single number. Drop the age range categorical column.
+
+  Next, we converted the value of each rangeto a single number, to make it a quantitative value. I took the lowest age in range, so "18-29" became 18, "30-44" became 30, and so forth.
+  
+```{python}
+#| label: New age column
+#| code-summary: Convert age ranges to single number. Drop age range categorical column.
+
+# Take lowest age in range
+df2['age_new'] = df2['age'].map(
+    lambda x: 18 if x == "18-29" else 30 if x == "30-44" else 45 if x == '45-60' else 60 if x == "> 60" else 39  # nan values go to average age, 39
+  )
+# Remove age column
+df2 = df2.drop('age', axis=1)
+```
+
+  c. Create a new column that converts the education groupings to a single number. Drop the school categorical column
+
+  I changed the education groupings to a single number, and named it "education_new", in numerical order. "Less than high school degree" is 0, while "Graduate degree" is 4.
+
+```{python}
+#| label: New education column
+#| code-summary: Convert education to single number. Drop school categorical column.
+
+# Assign values in ascending order
+df2['education_new'] = df2['education'].map(
+    lambda x: 0 if x == "Less than high school degree" else 1 if x == "High school degree" else 2 if x == 'Some college or Associate degree' else 3 if x == "Bachelor degree" else 4 if x == "Graduate degree" else 0 # Assume High school if nan (most people graduate from high school?)
+  )
+# Remove education column
+df2 = df2.drop('education', axis=1)
+```
+
+  d. Create a new column that converts the income ranges to a single number. Drop the income range categorical column.
+
+  When converting the categories, I used the median value of each range. "$0 = $24,999" became 12,500, "$25,000 - $49,999" became 37,500, and so forth.
+
+```{python}
+#| label: New income column
+#| code-summary: Convert income ranges to single number. Drop income range categorical column
+
+# Assigne income as halfway of each range
+df2['income_new'] = df2['income'].map(
+    lambda x:
+      12500 if x == "$0 - $24,999" else 37500 if x == "$25,000 - $49,999" else 75000 if x == "$50,000 - $99,999" else 125000 if x == "$100,000 - $149,999" else 150000 if x == '$150,000' else 75000 # nan values go to average age, 39
+  )
+# Remove age column
+df2 = df2.drop('income', axis=1)
+```
+
+  e. Create your target (also known as “y” or “label”) column based on the new income range column.
+
+  I made my target column a simple boolean column: True for above 50,000, and False for less.
+
+```{python}
+#| label: Create target column
+#| code-summary: Create target column based on new income column
+
+df2["y"] = df2["income_new"].map(lambda x:
+ True if x >= 50000 else False)
+```
+
+  f. One-hot encode all remaining categorical columns.
+
+  I one-hot encoded every column not already interacted with.
+
+```{python}
+#| label: One-hot encode
+#| code-summary: One-hot encode remaining columns
+
+df3 = pd.get_dummies(df2, columns=["seen_film", "is_fan", "ep_1", "ep_2", "ep_3", "ep_4", "ep_5", "ep_6", "age_new", "han", "luke", "leia", "anakin", "obi_wan", "palp", 'vader', 'lando', 'boba', 'c-3p0', 'r2_d2', 'jar_jar', 'padme', 'yoda', "first", "eu", "gender", "location"])
+
+```
+
+## 3. Validate data
+
+Validate that the data provided on GitHub lines up with the article by recreating 2 of the visuals from the article.
+
+```{python}
+#| label: Graph 1
+#| code-summary: Graph which movies have been seen by percentage
+
+total_counts = df2[['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6']].count()
+
+# Calculate the ratio of "true" values to the total count for each column
+ratios = df2[['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6']].sum() / total_counts
+
+# Create a bar plot using Plotly Express
+fig = px.bar(
+    x=['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6'],
+    y=ratios,
+    title='Movies by percent viewership',
+)
+
+fig.update_layout(
+    xaxis_title='Movie',
+    yaxis_title='Percent Viewership',
+)
+
+# Show the plot
+fig.show()
+
+```
+
+```{python}
+#| label: Graph 2
+#| code-summary: Graph who shot first
+fig = px.histogram(df, x=['Which character shot first?'])
+
+fig.show()
+```
+
+The first graph lines up correctly with the article, with the viewerships per episode being about %80, %68, %66, %73, %91, and %88.
+
+The second graph lines up with what was in the article, where it went Han, "I don't understand", and Greedo, in descending order.
+
+## 4. Build model
+
+Build a machine learning model that predicts whether a person makes more than $50k. Describe your model and report the accuracy.
+
+```{python}
+#| label: import machine learning packages
+#| include: false
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.tree import DecisionTreeClassifier
+```
+
+```{python}
+#| label: Create model
+#| code-summary: Create the machine learning model, and test the accuracy
+
+X = df3.drop(["y", "income_new"], axis=1)
+# Gender isn't helpful
+y = pd.DataFrame(df3["y"])
+
+train_X, test_X, train_y, test_y = train_test_split(X, y, random_state=34)
+
+model = DecisionTreeClassifier(random_state=12)
+model.fit(train_X, train_y)
+
+pred = model.predict(test_X)
+pred
+
+print(accuracy_score(test_y, pred))
+cm = confusion_matrix(test_y, pred)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot()
+
+```
+
+The model I created is somewhat. At first I was using an XGBoostRegressor model, but unfortunately, I struggled to find a way to predict income based on how well someone knows Star Wars. I switched to using a DecisionTreeClassifier and the results increased dramatically.
+
+As you can see in the above confusion matrix, there are many more false positives and false negatives than I'd like, making this model not very useful.

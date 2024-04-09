@@ -1,7 +1,7 @@
 ---
-title: "Client Report - [Insert Project Title]"
+title: "Client Report - Project 04"
 subtitle: "Course DS 250"
-author: "[STUDENT NAME]"
+author: "Tad Decker"
 format:
   html:
     self-contained: true
@@ -25,4 +25,160 @@ execute:
     
 ---
 
-### Paste in a template
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+
+from sklearn.inspection import permutation_importance
+import matplotlib.pyplot as plt
+```
+
+
+## Elevator pitch
+After an evaluation of the data, we the most home features that most likely indicate a construction prior or after 1980 are the square footage of livable space, square footage of basement space, and the number of stories. As time has gone on, it appears homes have grown larger and more expensive. Using this, we were able to create a model with an accuracy over 90% to predict if a home was constructed before or after 1980.
+
+```{python}
+#| label: project data
+#| code-summary: Read and format project data
+
+# Load dataframes from CSV link
+raw_df = pd.read_csv("https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_denver/dwellings_denver.csv")
+df = pd.read_csv("https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_ml/dwellings_ml.csv")
+```
+
+## 1. Potential relationships
+
+Create 2-3 charts that evaluate potential relationships between the home variables and before1980. Explain what you learn from the charts that could help a machine learning algorithm.
+
+```{python}
+#| label: Bin parcel column
+#| code-summary: Bin parcel column
+
+# Bin the parcel column
+df['parcel']
+df['parcel_area'] = df['parcel'].map(lambda x: x[:2])
+# Hold off on getting dummies until AFTER we plot!
+```
+
+In this chart, we see the 10 different parcel_areas the data is divided among. By doing some data exploration, I was able to interpret the `parcel` column in the data, and found that the first two numbers coorelated to differnt areas parcels of the city. Thus, I was able to reinterpret the quantitative column as a categorical value, rather than an unhelpful number.
+
+```{python}
+#| label: Chart 1
+#| code-summary: Living area and number of cars
+x = 'parcel_area'
+y = 'before1980'
+px.histogram(df[[x, y]], x=x, y=y, color=x)
+```
+
+This graph depicts the relationship between `livearea` and `basement`, or the relationship between the square footage of livable space and the square footage of basement. The information seems fairly cluttered for homes built before 1980, but for homes built after 1980, the the homes tend to have more cars and a larger living area.
+
+```{python}
+#| label: Chart 2
+#| code-summary: Net price and number of cars
+x = 'livearea'
+y = 'basement'
+px.scatter(df[[x, y, 'before1980']], x=x, y=y, color='before1980', symbol='before1980')
+```
+
+Here, we can see the relationship between selling price and tax deduction. Although the homes from after 1980 have higher prices, they also have higher price deductions. The deductions for homes before 1980 cap at about 22k, while the deductions for homes after 1980 cap at over 100k.
+
+```{python}
+#| label: Chart 3
+#| code-summary: Sell price and deductions from selling price
+x = 'sprice'
+y = 'deduct'
+px.scatter(df[[x, y, 'before1980']], x=x, y=y, color='before1980', symbol='before1980')
+```
+
+## 2. Classification model
+
+Build a classification model labeling houses as being built “before 1980” or “during or after 1980”. Your goal is to reach or exceed 90% accuracy. Explain your final model choice (algorithm, tuning parameters, etc) and describe what other models you tried.
+
+For my classification model, I decided to use the DecisionTreeClassifier from Scikit learn. I trained it on my training data.
+
+```{python}
+#| label: Create model
+#| code-summary: Create model and make predictions
+
+# First, get the dummies we held off making above.
+df = pd.get_dummies(df, columns=['parcel_area'])
+
+# Drop columns we don't want.
+X = df.drop(['before1980', 'parcel', 'abstrprd', 'yrbuilt', 'syear', 'smonth'], axis=1)
+y = df['before1980']
+
+# Get the training and test sets.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.34, random_state=76)
+
+# Create the model.
+tree = DecisionTreeClassifier(random_state=21, max_depth=13, min_samples_split=2, min_samples_leaf=2)
+
+# Train the model.
+tree.fit(X_train, y_train)
+
+# Test the accuracy.
+predictions = tree.predict(X_test)
+
+print('Accuracy score:', accuracy_score(y_test, predictions))
+
+```
+
+## 3. Feature discussion
+
+Justify your classification model by discussing the most important features selected by your model. This discussion should include a chart and a description of the features.
+
+To complete this request, I used the function `permutation_importance` from Scikit-learn to calcluate the importance of each feature. "Mean decrease in impurity" is the average reduction of uncertainty at tree node for that feature. The higher the value, the more sure we are of our decision after using the feature.
+
+The feature with the highest mean decrease in impurity is `livearea`, followed by `basement`, then `stories`. This makes sense, when considering the previous charts.
+
+```{python}
+#| label: Feature importance
+#| code-summary: Calculate feature importance
+result = permutation_importance(
+    tree, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
+
+feature_names = list(X.columns)
+
+tree_importances = pd.Series(result.importances_mean, index=feature_names).head(10)
+
+# Plot the importances
+fig, ax = plt.subplots()
+tree_importances.plot.bar(ax=ax)
+ax.set_title("Feature importances using MDI")
+ax.set_ylabel("Mean decrease in impurity")
+fig.tight_layout()
+```
+
+## 4. Model quality
+
+Describe the quality of your classification model using 2-3 different evaluation metrics. You also need to explain how to interpret each of the evaluation metrics you use.
+
+The first evaluation is the confusion matrix. This will show us how many true positives, false positives, true negatives, and false negatives we have in our predictions.
+
+```{python}
+#| label: Confusion Matrix
+#| code-summary: Confusion matrix
+print(confusion_matrix(y_test, predictions))
+```
+
+In my confusion matrix, we can see that there were1509 true positives with only 173 false positives. We also had 2670 true negatives, with 231 false negatives. This is pretty good, as we'll soon see.
+
+The second matrix I used are values found in the scikit-learn classification report, specifically precision and recall. Precision asks the question, "Of the positives we gave, what percent were true positives?", and recall asks, "Of all the positives that existed, how many did we find?"
+
+```{python}
+#| label: Classification Report
+#| code-summary: Classifaction report
+print(classification_report(y_test, predictions))
+```
+
+The value "1" stands for true, or a positive value of `before1980`. We can see in my model that the precision is a value of 0.94, meaning 94% of all our positive clasifications were accurate, and a recall value of 0.92, meaning we were able to correctly identify 92% of the postives in the data. These are good results.
+

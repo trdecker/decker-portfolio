@@ -1,7 +1,7 @@
 ---
-title: "Client Report - [Insert Project Title]"
+title: "Client Report - What's in a name?"
 subtitle: "Course DS 250"
-author: "[STUDENT NAME]"
+author: "Tad Decker"
 format:
   html:
     self-contained: true
@@ -25,4 +25,82 @@ execute:
     
 ---
 
-### Paste in a template
+
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import altair as alt
+```
+
+
+## Elevator pitch
+After analyzing the data given, I was able to ascertain that my birth name ("Tad") reached its climax between the 1960s and 1980s, meaning I was given the name "Tad" during a decline in its popularity. If I were to meet a "Brittany", I would guess her age to 34, and she was born around 1990. When it comes to the names "Mary", "Martha", "Peter", and "Paul", Mary has easily been the most popular, hitting spikes around 1910 and 1950. All four names have been in decline since 1950. Lastly, the unique name "Carrie" spiked in 1977, coinciding with the release of Star Wars.
+
+```{python}
+#| label: project data
+#| code-summary: Read and format project data
+df = pd.read_csv("https://raw.githubusercontent.com/byuidatascience/data4names/master/data-raw/names_year/names_year.csv")
+```
+
+## Birth name compared to historicity
+__How does my name at my birth year compare to its use historically?__
+
+Historically, it appears my name ("Tad") spiked between the 1960s and 1980s. It hit a dip in 1980, before spiking again during the 1980s and 1990s. Before 1950, there are very few instances of the name "Tad", as well as after 2000. I was born in the year 2000, which means I was born at a time the name was the least popular it had been in almost fifty years.
+
+```{python}
+# Birth name compared to historicity
+
+tad = df[df['name'] == 'Tad'][['year', 'Total']]
+
+px.line(tad, x='year', y='Total', title="\"Tad\" name by year")
+```
+
+## Brittany age guess
+__If I talked to someone named Brittany on the phone, what is my guess of his or her age? What ages would I not guess?__
+
+If I met someone named Brittany, I would guess she were born around the year 1990. As of 2024, I would guess her age was around 34.
+
+```{python}
+# Brittany age guess
+
+brittany = df[df['name'] == 'Brittany'][['year', 'Total']]
+
+px.line(brittany, x='year', y='Total', title="\"Brittany\" name by year")
+```
+
+```{python}
+name = df[df['name'] == 'Karen'][['year', 'Total']]
+
+px.line(name, x='year', y='Total')
+```
+
+
+## Common christian name usage
+__Mary, Martha, Peter, and Paul are all Christian names. From 1920 - 2000, compare the name usage of each of the four names. What trends do I notice?__
+
+Mary reached an incredibly high point around 1910 and in 1950, with a slight dip between. Since 1950, it's continued to reduce. Marth, Paul, and Peter were usually half or less than half as popular than Mary at the height of Mary's popularity. Since the 1970s, however, all of the names have begun decreasing. Interestingly, Paul had its own spik around 1955,where it grew to almost double what it was in 1925, but it has reduced now, as well.
+
+```{python}
+# Common christian name usage
+
+christian_names = ['Mary', 'Martha', 'Peter', 'Paul']
+christian_df = df[df['name'].isin(christian_names)][['name', 'year', 'Total']]
+
+px.line(christian_df, x='year', y='Total', color='name', width=500, title="Christian names comparison by year")
+```
+
+## Unique movie name usage
+__Think of a unique name from a famous movie. Plot the usage of that name and see how changes line up with the movie release. Does it look like the movie had an effect on usage?__
+
+The name "Carrie" hovered around 2000 from 1910 to 1955. After an increase to 6000 in 1970, the name spiked to 8000 in 1977 before drastically decreasing. The cause? In 1977, the box office hit Star Wars came to theaters. And who was the actress who played the eponymous Leia? Carrie Fisher.
+
+```{python}
+# Unique movie name usage
+
+unique_name = df[df['name'] == 'Carrie'][['year', 'Total']]
+
+px.line(unique_name, x='year', y='Total', title="\"Carrie\" name by year")
+```

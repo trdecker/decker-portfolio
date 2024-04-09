@@ -1,7 +1,7 @@
 ---
-title: "Client Report - [Insert Project Title]"
+title: "Client Report - SWL for Data Science"
 subtitle: "Course DS 250"
-author: "[STUDENT NAME]"
+author: "Tad Decker"
 format:
   html:
     self-contained: true
@@ -25,4 +25,203 @@ execute:
     
 ---
 
-### Paste in a template
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import sqlite3
+```
+
+## Elevator pitch
+
+Although baseball salaries continue to increase, the teams continue to be neck to neck in the Major League Baseball rankings. In my evaluations of the Texas Rangers and Atlanta Braves, I found that although one outpaced the other in salaries, the other continued to be a formidable threat, even beating them in rank.
+
+Addtionally, average hitting rate can be a deceptive statistic. Players with more at-bats tend to have lower average hitting rates. Several players from years such as 1969, 1995, and 2008 had 100% hitting rates-because they only hit once. This could present a false sense of skill to players who hit less, and a lack of skill to players who hit more often.
+
+```{python}
+#| label: project-data
+#| code-summary: Read and format project data
+sqlite_file = 'lahmansbaseballdb.sqlite'
+con = sqlite3.connect(sqlite_file)
+```
+
+## 1. SQL Baseball Query
+
+Write an SQL query to create a new dataframe about baseball players who attended BYU-Idaho. The new table should contain five columns: playerID, schoolID, salary, and the yearID/teamID associated with each salary. Order the table by salary (highest to lowest) and print out the table in your report.
+
+```{python}
+#| label: SQL Baseball Query
+#| code-summary: Query for players who went to BYU-I
+
+q = '''
+    SELECT 
+      collegeplaying.playerid, 
+      collegeplaying.schoolid, 
+      salaries.salary, 
+      salaries.yearid, 
+      salaries.teamid
+    FROM collegeplaying
+      JOIN salaries
+      ON collegeplaying.playerid = salaries.playerid
+    WHERE schoolid ==
+    "idbyuid"
+    ORDER BY salary DESC
+    '''
+
+results = pd.read_sql_query(q, con)
+results
+
+```
+
+## 2. Batting average
+
+### 2a.
+
+Write an SQL query that provides playerID, yearID, and batting average for players with at least 1 at bat that year. Sort the table from highest batting average to lowest, and then by playerid alphabetically. Show the top 5 results in your report.
+
+```{python}
+#| label: Batting average min. 1 at bat
+#| code-summary: Query for batting average for players with at least 1 at bat
+
+q = '''
+    SELECT 
+      battingpost.playerID,
+      battingpost.yearID,
+      battingpost.H,
+      battingpost.AB
+    FROM battingpost
+    WHERE battingpost.AB > 1
+    '''
+
+results = pd.read_sql_query(q, con)
+results['AVG'] = results['H'] / results['AB']
+results = results.sort_values('AVG', ascending=False)
+results[['playerID', 'yearID', 'AVG']].head(5)
+```
+
+### 2b.
+
+Use the same query as above, but only include players with at least 10 at bats that year. Print the top 5 results.
+
+```{python}
+#| label: Batting average min. 10 at bats
+#| code-summary: Query for batting average for players with at least 10 at bats
+
+q = '''
+    SELECT 
+      battingpost.playerID,
+      battingpost.yearID, 
+      battingpost.H,
+      battingpost.AB
+    FROM battingpost
+    WHERE battingpost.AB > 10
+    '''
+
+results = pd.read_sql_query(q, con)
+results['AVG'] = results['H'] / results['AB']
+results = results.sort_values('AVG', ascending=False)
+results[['playerID', 'yearID', 'AVG']].head(5)
+```
+
+### 2c.
+
+Now calculate the batting average for players over their entire careers (all years combined). Only include players with at least 100 at bats, and print the top 5 results.
+
+```{python}
+#| label: Total batting average
+#| code-summary: Query for calculating total batting average
+
+q = '''
+    SELECT 
+      battingpost.playerID,
+      battingpost.yearID,
+      SUM(battingpost.h) AS total_h,
+      SUM(battingpost.ab) AS total_ab
+    FROM battingpost
+    GROUP BY battingpost.playerid 
+    HAVING total_ab > 100
+    '''
+
+results = pd.read_sql_query(q, con)
+results['AVG'] = results['total_h'] / results['total_ab']
+results = results.sort_values('AVG', ascending=False)
+results[['playerID', 'yearID', 'AVG']].head(5)
+
+```
+
+
+## 3. Baseball Team Comparison
+
+Pick any two baseball teams and compare them using a metric of your choice (average salary, home runs, number of wins, etc). Write an SQL query to get the data you need, then make a graph using Plotly Express to visualize the comparison. What do you learn?
+
+The two baseball teams I chose to compare were the Atlanta Braves and Texas Dodgers.
+
+```{python}
+#| label: Team comparison
+#| code-summary: Prepare information for exploration
+
+q = '''
+    SELECT DISTINCT salaries.teamId, salaries.playerId, salaries.salary, salaries.yearID
+    FROM salaries
+    WHERE salaries.teamID = "ATL" OR salaries.teamID = "TEX"
+    '''
+
+results = pd.read_sql_query(q, con)
+results
+```
+
+As can be seen in this chart, the player salaries of both teams are very skewed in the positive direciton. There are many outliers, with Texas having the higher salaries. Atlanta tops just over 15M, while Texas nearly approaches 25M.
+
+```{python}
+#| label: Team comparison average salary distribution
+#| code-summary: Compare the salaries of the players by team
+px.box(results, y="salary", color="teamID", title="Salary comparison by team")
+```
+
+I wanted a closer look at the actual average salaries. Here, we can see that the average salary for Atlanta is actually a little higher, but not by much. Both Teams hover around 2M.
+
+```{python}
+#| label: Team comparison by average salary
+#| code-summary: Compare the salaries of the players by team
+average_salary = results.groupby('teamID')['salary'].mean().reset_index()
+
+px.bar(average_salary, x="teamID", y="salary", color="teamID", title="Average salary by team")
+```
+
+Next, I wanted to see if the average salaries of each team were changing much by year.
+
+```{python}
+#| label: Team comparison by average salary by year
+#| code-summary: Compare the salaries of the two teams by year
+average_salary = results.groupby(['yearID', 'teamID'])['salary'].mean().reset_index()
+salary_by_year = px.line(average_salary, x="yearID", y="salary", color="teamID", title="Average salary by year")
+salary_by_year.show()
+```
+
+Finally, I wanted to see if there was any sort of coorelation to the wins per year of either team.
+
+```{python}
+#| label: Team comparison by wins
+#| code-summary: Prepare information for exploration
+
+q = '''
+    SELECT teams.teamId, teams.yearID, teams.teamRank
+    FROM teams
+    WHERE teams.teamID = "ATL" OR teams.teamID = "TEX"
+    '''
+
+team_results = pd.read_sql_query(q, con)
+
+team_rank = team_results.groupby(['teamID', 'yearID'])['teamRank'].mean().reset_index()
+rank_by_year = px.line(team_rank, x="yearID", y="teamRank", color="teamID", title="Team rank by year")
+
+rank_by_year.update_yaxes(autorange="reversed")
+
+rank_by_year.show()
+```
+
+From what I've been able to evaluate, the result is... not clear. Although salaries have increased astronomicaly across both teams, neither team have changed much. Since 2000 neither teams haven't dropped beneath around 65 wins a year, but this may be because they're simply playing more games. 
+
+Although will take further data exploration to come to a more concrete conclusion, one interesting takeaway is that although in 2019 Texas's average salary nearly doubled Atlanta, Atlanta still outranked Texas. It would be interesting what has happened since 2019.
