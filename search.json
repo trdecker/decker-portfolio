@@ -1,0 +1,366 @@
+[
+  {
+    "objectID": "Templates/DS350_Template.html",
+    "href": "Templates/DS350_Template.html",
+    "title": "Client Report - [Insert Project Title]",
+    "section": "",
+    "text": "TODO: Update with template from Paul\n\n\n\n\n Back to top"
+  },
+  {
+    "objectID": "story_telling.html",
+    "href": "story_telling.html",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "story_telling.html#title-2-header",
+    "href": "story_telling.html#title-2-header",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "projects.html",
+    "href": "projects.html",
+    "title": "DS250 Projects",
+    "section": "",
+    "text": "Project 1\nProject 2\nProject 3\nProject 4\nProject 5"
+  },
+  {
+    "objectID": "projects.html#repo-for-all-my-projects",
+    "href": "projects.html#repo-for-all-my-projects",
+    "title": "DS250 Projects",
+    "section": "",
+    "text": "Project 1\nProject 2\nProject 3\nProject 4\nProject 5"
+  },
+  {
+    "objectID": "Projects/project4.html",
+    "href": "Projects/project4.html",
+    "title": "Client Report - Project 04",
+    "section": "",
+    "text": "After an evaluation of the data, we the most home features that most likely indicate a construction prior or after 1980 are the square footage of livable space, square footage of basement space, and the number of stories. As time has gone on, it appears homes have grown larger and more expensive. Using this, we were able to create a model with an accuracy over 90% to predict if a home was constructed before or after 1980.\n\n\nRead and format project data\n# Load dataframes from CSV link\nraw_df = pd.read_csv(\"https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_denver/dwellings_denver.csv\")\ndf = pd.read_csv(\"https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_ml/dwellings_ml.csv\")"
+  },
+  {
+    "objectID": "Projects/project4.html#elevator-pitch",
+    "href": "Projects/project4.html#elevator-pitch",
+    "title": "Client Report - Project 04",
+    "section": "",
+    "text": "After an evaluation of the data, we the most home features that most likely indicate a construction prior or after 1980 are the square footage of livable space, square footage of basement space, and the number of stories. As time has gone on, it appears homes have grown larger and more expensive. Using this, we were able to create a model with an accuracy over 90% to predict if a home was constructed before or after 1980.\n\n\nRead and format project data\n# Load dataframes from CSV link\nraw_df = pd.read_csv(\"https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_denver/dwellings_denver.csv\")\ndf = pd.read_csv(\"https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_ml/dwellings_ml.csv\")"
+  },
+  {
+    "objectID": "Projects/project4.html#potential-relationships",
+    "href": "Projects/project4.html#potential-relationships",
+    "title": "Client Report - Project 04",
+    "section": "1. Potential relationships",
+    "text": "1. Potential relationships\nCreate 2-3 charts that evaluate potential relationships between the home variables and before1980. Explain what you learn from the charts that could help a machine learning algorithm.\n\n\nBin parcel column\n# Bin the parcel column\ndf['parcel']\ndf['parcel_area'] = df['parcel'].map(lambda x: x[:2])\n# Hold off on getting dummies until AFTER we plot!\n\n\nIn this chart, we see the 10 different parcel_areas the data is divided among. By doing some data exploration, I was able to interpret the parcel column in the data, and found that the first two numbers coorelated to differnt areas parcels of the city. Thus, I was able to reinterpret the quantitative column as a categorical value, rather than an unhelpful number.\n\n\nLiving area and number of cars\nx = 'parcel_area'\ny = 'before1980'\npx.histogram(df[[x, y]], x=x, y=y, color=x)\n\n\n\n                                                \n\n\nThis graph depicts the relationship between livearea and basement, or the relationship between the square footage of livable space and the square footage of basement. The information seems fairly cluttered for homes built before 1980, but for homes built after 1980, the the homes tend to have more cars and a larger living area.\n\n\nNet price and number of cars\nx = 'livearea'\ny = 'basement'\npx.scatter(df[[x, y, 'before1980']], x=x, y=y, color='before1980', symbol='before1980')\n\n\n\n                                                \n\n\nHere, we can see the relationship between selling price and tax deduction. Although the homes from after 1980 have higher prices, they also have higher price deductions. The deductions for homes before 1980 cap at about 22k, while the deductions for homes after 1980 cap at over 100k.\n\n\nSell price and deductions from selling price\nx = 'sprice'\ny = 'deduct'\npx.scatter(df[[x, y, 'before1980']], x=x, y=y, color='before1980', symbol='before1980')"
+  },
+  {
+    "objectID": "Projects/project4.html#classification-model",
+    "href": "Projects/project4.html#classification-model",
+    "title": "Client Report - Project 04",
+    "section": "2. Classification model",
+    "text": "2. Classification model\nBuild a classification model labeling houses as being built “before 1980” or “during or after 1980”. Your goal is to reach or exceed 90% accuracy. Explain your final model choice (algorithm, tuning parameters, etc) and describe what other models you tried.\nFor my classification model, I decided to use the DecisionTreeClassifier from Scikit learn. I trained it on my training data.\n\n\nCreate model and make predictions\n# First, get the dummies we held off making above.\ndf = pd.get_dummies(df, columns=['parcel_area'])\n\n# Drop columns we don't want.\nX = df.drop(['before1980', 'parcel', 'abstrprd', 'yrbuilt', 'syear', 'smonth'], axis=1)\ny = df['before1980']\n\n# Get the training and test sets.\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.34, random_state=76)\n\n# Create the model.\ntree = DecisionTreeClassifier(random_state=21, max_depth=13, min_samples_split=2, min_samples_leaf=2)\n\n# Train the model.\ntree.fit(X_train, y_train)\n\n# Test the accuracy.\npredictions = tree.predict(X_test)\n\nprint('Accuracy score:', accuracy_score(y_test, predictions))\n\n\nAccuracy score: 0.915286869464767"
+  },
+  {
+    "objectID": "Projects/project4.html#feature-discussion",
+    "href": "Projects/project4.html#feature-discussion",
+    "title": "Client Report - Project 04",
+    "section": "3. Feature discussion",
+    "text": "3. Feature discussion\nJustify your classification model by discussing the most important features selected by your model. This discussion should include a chart and a description of the features.\nTo complete this request, I used the function permutation_importance from Scikit-learn to calcluate the importance of each feature. “Mean decrease in impurity” is the average reduction of uncertainty at tree node for that feature. The higher the value, the more sure we are of our decision after using the feature.\nThe feature with the highest mean decrease in impurity is livearea, followed by basement, then stories. This makes sense, when considering the previous charts.\n\n\nCalculate feature importance\nresult = permutation_importance(\n    tree, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2\n)\n\nfeature_names = list(X.columns)\n\ntree_importances = pd.Series(result.importances_mean, index=feature_names).head(10)\n\n# Plot the importances\nfig, ax = plt.subplots()\ntree_importances.plot.bar(ax=ax)\nax.set_title(\"Feature importances using MDI\")\nax.set_ylabel(\"Mean decrease in impurity\")\nfig.tight_layout()"
+  },
+  {
+    "objectID": "Projects/project4.html#model-quality",
+    "href": "Projects/project4.html#model-quality",
+    "title": "Client Report - Project 04",
+    "section": "4. Model quality",
+    "text": "4. Model quality\nDescribe the quality of your classification model using 2-3 different evaluation metrics. You also need to explain how to interpret each of the evaluation metrics you use.\nThe first evaluation is the confusion matrix. This will show us how many true positives, false positives, true negatives, and false negatives we have in our predictions.\n\n\nConfusion matrix\nprint(confusion_matrix(y_test, predictions))\n\n\n[[2575  309]\n [ 351 4556]]\n\n\nIn my confusion matrix, we can see that there were1509 true positives with only 173 false positives. We also had 2670 true negatives, with 231 false negatives. This is pretty good, as we’ll soon see.\nThe second matrix I used are values found in the scikit-learn classification report, specifically precision and recall. Precision asks the question, “Of the positives we gave, what percent were true positives?”, and recall asks, “Of all the positives that existed, how many did we find?”\n\n\nClassifaction report\nprint(classification_report(y_test, predictions))\n\n\n              precision    recall  f1-score   support\n\n           0       0.88      0.89      0.89      2884\n           1       0.94      0.93      0.93      4907\n\n    accuracy                           0.92      7791\n   macro avg       0.91      0.91      0.91      7791\nweighted avg       0.92      0.92      0.92      7791\n\n\n\nThe value “1” stands for true, or a positive value of before1980. We can see in my model that the precision is a value of 0.94, meaning 94% of all our positive clasifications were accurate, and a recall value of 0.92, meaning we were able to correctly identify 92% of the postives in the data. These are good results."
+  },
+  {
+    "objectID": "Projects/project2.html",
+    "href": "Projects/project2.html",
+    "title": "Client Report - Late flights and missing data",
+    "section": "",
+    "text": "At first glance the data we’ve collected about delayed airplane flights seem simple, but with a closer inspection we find some interseting informaiton. Atlanta may have the most delayed flights of the seven airports we evaluated, but when it comes to percent delayed, San Fransisco takes the cake.\n\n\nRead and format project data\ndf = pd.read_json(\"https://raw.githubusercontent.com/byuidatascience/data4missing/master/data-raw/flights_missing/flights_missing.json\")\n\n\n\n\nCode\n# a = df.filter(['month']).query('month == \"n/a\"').value_counts()\n# df.filter(['airport_name']).value_counts()\n# df.filter(['year']).value_counts()\n\ndf.filter(['minutes_delayed_carrier']).query('minutes_delayed_carrier.isnull() == True', engine='python').shape[0]\n\ndf.filter(['year']).query('year.isnull() == True', engine='python').shape[0]\n# e = df.filter(['minutes_delayed_nas']).query('minutes_delayed_nas == \"n/a\"').value_counts()\n\n# print(a, b, c, d, e)\n\n\n23"
+  },
+  {
+    "objectID": "Projects/project2.html#elevator-pitch",
+    "href": "Projects/project2.html#elevator-pitch",
+    "title": "Client Report - Late flights and missing data",
+    "section": "",
+    "text": "At first glance the data we’ve collected about delayed airplane flights seem simple, but with a closer inspection we find some interseting informaiton. Atlanta may have the most delayed flights of the seven airports we evaluated, but when it comes to percent delayed, San Fransisco takes the cake.\n\n\nRead and format project data\ndf = pd.read_json(\"https://raw.githubusercontent.com/byuidatascience/data4missing/master/data-raw/flights_missing/flights_missing.json\")\n\n\n\n\nCode\n# a = df.filter(['month']).query('month == \"n/a\"').value_counts()\n# df.filter(['airport_name']).value_counts()\n# df.filter(['year']).value_counts()\n\ndf.filter(['minutes_delayed_carrier']).query('minutes_delayed_carrier.isnull() == True', engine='python').shape[0]\n\ndf.filter(['year']).query('year.isnull() == True', engine='python').shape[0]\n# e = df.filter(['minutes_delayed_nas']).query('minutes_delayed_nas == \"n/a\"').value_counts()\n\n# print(a, b, c, d, e)\n\n\n23"
+  },
+  {
+    "objectID": "Projects/project2.html#fix-missing-datatypes",
+    "href": "Projects/project2.html#fix-missing-datatypes",
+    "title": "Client Report - Late flights and missing data",
+    "section": "Fix missing datatypes",
+    "text": "Fix missing datatypes\nFix all of the varied missing data types in the data to be consistent (all missing values should be displayed as “NaN”).\nIn your report include one record example (one row) from your new data, in the raw JSON format. Your example should display the “NaN” for at least one missing value.\n\n\nCode\ndf = df.replace(-999, np.nan)\ndf = df.replace('n/a', np.nan)\n\ndf[df.isin([np.nan]).any(axis=1)].head(1)\n\n\n\n\n\n\n\n\n\nairport_code\nairport_name\nmonth\nyear\nnum_of_flights_total\nnum_of_delays_carrier\nnum_of_delays_late_aircraft\nnum_of_delays_nas\nnum_of_delays_security\nnum_of_delays_weather\nnum_of_delays_total\nminutes_delayed_carrier\nminutes_delayed_late_aircraft\nminutes_delayed_nas\nminutes_delayed_security\nminutes_delayed_weather\nminutes_delayed_total\n\n\n\n\n0\nATL\nAtlanta, GA: Hartsfield-Jackson Atlanta Intern...\nJanuary\n2005.0\n35048\n1500+\nNaN\n4598\n10\n448\n8355\n116423.0\n104415\n207467.0\n297\n36931\n465533"
+  },
+  {
+    "objectID": "Projects/project2.html#which-airport-has-the-worst-delays",
+    "href": "Projects/project2.html#which-airport-has-the-worst-delays",
+    "title": "Client Report - Late flights and missing data",
+    "section": "Which airport has the worst delays?",
+    "text": "Which airport has the worst delays?\nDiscuss the metric you chose, and why you chose it to determine the “worst” airport. Your answer should include a summary table that lists (for each airport) the total number of flights, total number of delayed flights, proportion of delayed flights, and average delay time in hours.\nBased on the information, the airport I would call the “worst” would be the San Fransisco Airport (SFL). Although the Atlanta Airport (ATL) has the highest number of delayed flights, it also flies many more planes than the other airports.\n\n\nCode\nsum_dat = df[['airport_code', 'num_of_delays_total', 'num_of_flights_total']].groupby('airport_code').sum().head(1000).reset_index().tail(10)\n\nsum_dat['percent_delayed'] = ((sum_dat['num_of_delays_total'] / sum_dat['num_of_flights_total']) * 100).round(2)\n\nmean_dat = df.groupby('airport_code')['minutes_delayed_total'].mean().reset_index().round(2)\n\nmydat = pd.merge(sum_dat, mean_dat, on='airport_code').sort_values(by='percent_delayed', ascending=False)\n\nairport_bar = px.bar(mydat, x='airport_code', y='percent_delayed').update_layout(xaxis_title=\"Airport Code\", yaxis_title=\"Percent Delayed\")\nairport_bar.show()\n\ndisplay(mydat)\n\n\n\n                                                \n\n\n\n\n\n\n\n\n\nairport_code\nnum_of_delays_total\nnum_of_flights_total\npercent_delayed\nminutes_delayed_total\n\n\n\n\n5\nSFO\n425604\n1630945\n26.10\n201140.10\n\n\n3\nORD\n830825\n3597588\n23.09\n426940.37\n\n\n0\nATL\n902443\n4430047\n20.37\n408969.14\n\n\n2\nIAD\n168467\n851571\n19.78\n77905.14\n\n\n4\nSAN\n175132\n917862\n19.08\n62698.85\n\n\n1\nDEN\n468519\n2513974\n18.64\n190707.43\n\n\n6\nSLC\n205160\n1403384\n14.62\n76692.20"
+  },
+  {
+    "objectID": "Projects/project2.html#what-is-the-best-month-to-fly",
+    "href": "Projects/project2.html#what-is-the-best-month-to-fly",
+    "title": "Client Report - Late flights and missing data",
+    "section": "What is the best month to fly?",
+    "text": "What is the best month to fly?\nWhat is the best month to fly if you want to avoid delays of any length?\nDiscuss the metric you chose and why you chose it to calculate your answer. Include one chart to help support your answer, with the x-axis ordered by month. (To answer this question, you will need to remove any rows that are missing the Month variable.)\n\n\nCreate graph to evaluate the best month to fly to avoid delays\n# Filter out NaN values\ndf_months = df.query('month.isnull() == False', engine='python')\n\n# Combine months and create columns for total flights, delayed flights, and percent delayed\ndf_months = df_months.groupby('month').agg(\n  num_of_flights_total = ('num_of_flights_total', 'sum'),\n  num_of_delays_total = ('num_of_delays_total', 'sum')\n  ).reset_index()\n\ndf_months['percent_delayed'] = ((df_months['num_of_delays_total'] / df_months['num_of_flights_total']) * 100).round(2)\n\n# 'February' is spelt wrong, so fix that\ndf_months = df_months.replace('Febuary', 'February')\n\n# Create bar chart\nmonth_bar = px.bar(df_months, x='month', y='percent_delayed')\n\n# Put months in order and display!\nmonths_in_order = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']\n\nmonth_bar.update_xaxes(categoryorder='array', categoryarray=months_in_order)\nmonth_bar.update_layout(xaxis_title='Month', yaxis_title='Percent Delayed')\n\nmonth_bar.show()\n\n\n\n                                                \n\n\nFor my metric, I chose to plot the total percent of delayed flights in the data set for each month. I wanted to make sure I choose a month that had fewer delayed flights, but only because it had fewer total flights, not because it was a better month. After plotting, we can see that the best months to fly if you want to avoid delays are September and November."
+  },
+  {
+    "objectID": "Projects/project2.html#create-column-of-total-flights-delayed-by-weather",
+    "href": "Projects/project2.html#create-column-of-total-flights-delayed-by-weather",
+    "title": "Client Report - Late flights and missing data",
+    "section": "Create column of total flights delayed by weather",
+    "text": "Create column of total flights delayed by weather\nYour job is to create a new column that calculates the total number of flights delayed by weather (both severe and mild).\nAccording to the BTS website, the “Weather” category only accounts for severe weather delays. Mild weather delays are not counted in the “Weather” category, but are actually included in both the “NAS” and “Late-Arriving Aircraft” categories. Your job is to create a new column that calculates the total number of flights delayed by weather (both severe and mild). You will need to replace all the missing values in the Late Aircraft variable with the mean. Show your work by printing the first 5 rows of data in a table. Use these three rules for your calculations:\n\n100% of delayed flights in the Weather category are due to weather\n30% of all delayed flights in the Late-Arriving category are due to weather.\nFrom April to August, 40% of delayed flights in the NAS category are due to weather. The rest of the months, the proportion rises to 65%.\n\n\n\nCreate new row that is total number of flights delayed because of weather\n# Get mean num_of_delays_late_aircraft\nmean_late_air_craft = df['num_of_delays_late_aircraft'].mean()\n\n# Replace every NaN value with the mean\ndf['num_of_delays_late_aircraft'] = df['num_of_delays_late_aircraft'].replace(np.nan, mean_late_air_craft)\n\ndf['num_of_delays_late_aircraft'].head()\n\n# Months from April to August\napril_to_august = ['April', 'May', 'June', 'July', 'August']\n\n# Calculate num_of_delays_weather_total with the criteria given in the question\ndf['num_of_delays_weather_total'] = df['num_of_delays_weather'] + (df['num_of_delays_late_aircraft'] * .3) + np.where(df['month'].isin(april_to_august), df['num_of_delays_nas'] * .4, df['num_of_delays_nas'] * .6)\n\n# Display first five rows in a table\ndisplay(df\n  .head(5)\n  .filter([\"airport_code\", \"num_of_delays_nas\",\"month\", \"num_of_delays_weather_total\"]))\n\n\n\n\n\n\n\n\n\nairport_code\nnum_of_delays_nas\nmonth\nnum_of_delays_weather_total\n\n\n\n\n0\nATL\n4598\nJanuary\n3539.531222\n\n\n1\nDEN\n935\nJanuary\n1072.400000\n\n\n2\nIAD\n895\nJanuary\n915.400000\n\n\n3\nORD\n5415\nJanuary\n4231.500000\n\n\n4\nSAN\n638\nJanuary\n642.800000"
+  },
+  {
+    "objectID": "Projects/project2.html#barplot-display",
+    "href": "Projects/project2.html#barplot-display",
+    "title": "Client Report - Late flights and missing data",
+    "section": "Barplot display",
+    "text": "Barplot display\nUsing the new weather variable calculated above, create a barplot showing the proportion of all flights that are delayed by weather at each airport. Discuss what you learn from this graph.\n\n\nGraph num_of_delays_weathe[_total on a barplot\nbarplot = sns.barplot(df[['airport_code', 'num_of_delays_weather_total']], x='airport_code', y='num_of_delays_weather_total')\n\nbarplot.set(xlabel='Airport Code', ylabel='Total Delays Due to Weather')\nplt.show()\n\n\n\n\n\nTotal flights delayed by weather barplot\n\n\n\n\nAs displayed in this graph, after calculating the total number of flights delayed by weather we can see that Atlanta and O’Hare International Airport have the worst amounts of flights due to weather. Denver and San Fransisco are second with nearly half the amount, with Dulles, San Diego, and Salt Lake City in third, by about another half."
+  },
+  {
+    "objectID": "ml.html",
+    "href": "ml.html",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "ml.html#title-2-header",
+    "href": "ml.html#title-2-header",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "full_stack.html",
+    "href": "full_stack.html",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "full_stack.html#title-2-header",
+    "href": "full_stack.html#title-2-header",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "competition.html",
+    "href": "competition.html",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics\n#’ — #’ title: Palmer Penguins #’ author: Norah Jones #’ date: 3/12/23 #’ format: html #’ —\nlibrary(palmerpenguins)\n#’ ## Exploring the data #’ See ?@fig-bill-sizes for an exploration of bill sizes by species.\n#| label: fig-bill-sizes #| fig-cap: Bill Sizes by Species #| warning: false library(ggplot2) ggplot(data = penguins, aes(x = bill_length_mm, y = bill_depth_mm, group = species)) + geom_point(aes(color = species, shape = species), size = 3, alpha = 0.8) + labs(title = “Penguin bill dimensions”, subtitle = “Bill length and depth for Adelie, Chinstrap and Gentoo Penguins at Palmer Station LTER”, x = “Bill length (mm)”, y = “Bill depth (mm)”, color = “Penguin species”, shape = “Penguin species”)"
+  },
+  {
+    "objectID": "competition.html#title-2-header",
+    "href": "competition.html#title-2-header",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics\n#’ — #’ title: Palmer Penguins #’ author: Norah Jones #’ date: 3/12/23 #’ format: html #’ —\nlibrary(palmerpenguins)\n#’ ## Exploring the data #’ See ?@fig-bill-sizes for an exploration of bill sizes by species.\n#| label: fig-bill-sizes #| fig-cap: Bill Sizes by Species #| warning: false library(ggplot2) ggplot(data = penguins, aes(x = bill_length_mm, y = bill_depth_mm, group = species)) + geom_point(aes(color = species, shape = species), size = 3, alpha = 0.8) + labs(title = “Penguin bill dimensions”, subtitle = “Bill length and depth for Adelie, Chinstrap and Gentoo Penguins at Palmer Station LTER”, x = “Bill length (mm)”, y = “Bill depth (mm)”, color = “Penguin species”, shape = “Penguin species”)"
+  },
+  {
+    "objectID": "cleansing.html",
+    "href": "cleansing.html",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "cleansing.html#title-2-header",
+    "href": "cleansing.html#title-2-header",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "exploration.html",
+    "href": "exploration.html",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "exploration.html#title-2-header",
+    "href": "exploration.html#title-2-header",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "index.html#title-2-header",
+    "href": "index.html#title-2-header",
+    "title": "about me",
+    "section": "",
+    "text": "MarkDown Basics"
+  },
+  {
+    "objectID": "Projects/project1.html",
+    "href": "Projects/project1.html",
+    "title": "Client Report - What’s in a name?",
+    "section": "",
+    "text": "After analyzing the data given, I was able to ascertain that my birth name (“Tad”) reached its climax between the 1960s and 1980s, meaning I was given the name “Tad” during a decline in its popularity. If I were to meet a “Brittany”, I would guess her age to 34, and she was born around 1990. When it comes to the names “Mary”, “Martha”, “Peter”, and “Paul”, Mary has easily been the most popular, hitting spikes around 1910 and 1950. All four names have been in decline since 1950. Lastly, the unique name “Carrie” spiked in 1977, coinciding with the release of Star Wars.\n\n\nRead and format project data\ndf = pd.read_csv(\"https://raw.githubusercontent.com/byuidatascience/data4names/master/data-raw/names_year/names_year.csv\")"
+  },
+  {
+    "objectID": "Projects/project1.html#elevator-pitch",
+    "href": "Projects/project1.html#elevator-pitch",
+    "title": "Client Report - What’s in a name?",
+    "section": "",
+    "text": "After analyzing the data given, I was able to ascertain that my birth name (“Tad”) reached its climax between the 1960s and 1980s, meaning I was given the name “Tad” during a decline in its popularity. If I were to meet a “Brittany”, I would guess her age to 34, and she was born around 1990. When it comes to the names “Mary”, “Martha”, “Peter”, and “Paul”, Mary has easily been the most popular, hitting spikes around 1910 and 1950. All four names have been in decline since 1950. Lastly, the unique name “Carrie” spiked in 1977, coinciding with the release of Star Wars.\n\n\nRead and format project data\ndf = pd.read_csv(\"https://raw.githubusercontent.com/byuidatascience/data4names/master/data-raw/names_year/names_year.csv\")"
+  },
+  {
+    "objectID": "Projects/project1.html#birth-name-compared-to-historicity",
+    "href": "Projects/project1.html#birth-name-compared-to-historicity",
+    "title": "Client Report - What’s in a name?",
+    "section": "Birth name compared to historicity",
+    "text": "Birth name compared to historicity\nHow does my name at my birth year compare to its use historically?\nHistorically, it appears my name (“Tad”) spiked between the 1960s and 1980s. It hit a dip in 1980, before spiking again during the 1980s and 1990s. Before 1950, there are very few instances of the name “Tad”, as well as after 2000. I was born in the year 2000, which means I was born at a time the name was the least popular it had been in almost fifty years.\n\n\nCode\n# Birth name compared to historicity\n\ntad = df[df['name'] == 'Tad'][['year', 'Total']]\n\npx.line(tad, x='year', y='Total', title=\"\\\"Tad\\\" name by year\")"
+  },
+  {
+    "objectID": "Projects/project1.html#brittany-age-guess",
+    "href": "Projects/project1.html#brittany-age-guess",
+    "title": "Client Report - What’s in a name?",
+    "section": "Brittany age guess",
+    "text": "Brittany age guess\nIf I talked to someone named Brittany on the phone, what is my guess of his or her age? What ages would I not guess?\nIf I met someone named Brittany, I would guess she were born around the year 1990. As of 2024, I would guess her age was around 34.\n\n\nCode\n# Brittany age guess\n\nbrittany = df[df['name'] == 'Brittany'][['year', 'Total']]\n\npx.line(brittany, x='year', y='Total', title=\"\\\"Brittany\\\" name by year\")\n\n\n\n                                                \n\n\n\n\nCode\nname = df[df['name'] == 'Karen'][['year', 'Total']]\n\npx.line(name, x='year', y='Total')"
+  },
+  {
+    "objectID": "Projects/project1.html#common-christian-name-usage",
+    "href": "Projects/project1.html#common-christian-name-usage",
+    "title": "Client Report - What’s in a name?",
+    "section": "Common christian name usage",
+    "text": "Common christian name usage\nMary, Martha, Peter, and Paul are all Christian names. From 1920 - 2000, compare the name usage of each of the four names. What trends do I notice?\nMary reached an incredibly high point around 1910 and in 1950, with a slight dip between. Since 1950, it’s continued to reduce. Marth, Paul, and Peter were usually half or less than half as popular than Mary at the height of Mary’s popularity. Since the 1970s, however, all of the names have begun decreasing. Interestingly, Paul had its own spik around 1955,where it grew to almost double what it was in 1925, but it has reduced now, as well.\n\n\nCode\n# Common christian name usage\n\nchristian_names = ['Mary', 'Martha', 'Peter', 'Paul']\nchristian_df = df[df['name'].isin(christian_names)][['name', 'year', 'Total']]\n\npx.line(christian_df, x='year', y='Total', color='name', width=500, title=\"Christian names comparison by year\")"
+  },
+  {
+    "objectID": "Projects/project1.html#unique-movie-name-usage",
+    "href": "Projects/project1.html#unique-movie-name-usage",
+    "title": "Client Report - What’s in a name?",
+    "section": "Unique movie name usage",
+    "text": "Unique movie name usage\nThink of a unique name from a famous movie. Plot the usage of that name and see how changes line up with the movie release. Does it look like the movie had an effect on usage?\nThe name “Carrie” hovered around 2000 from 1910 to 1955. After an increase to 6000 in 1970, the name spiked to 8000 in 1977 before drastically decreasing. The cause? In 1977, the box office hit Star Wars came to theaters. And who was the actress who played the eponymous Leia? Carrie Fisher.\n\n\nCode\n# Unique movie name usage\n\nunique_name = df[df['name'] == 'Carrie'][['year', 'Total']]\n\npx.line(unique_name, x='year', y='Total', title=\"\\\"Carrie\\\" name by year\")"
+  },
+  {
+    "objectID": "Projects/project3.html",
+    "href": "Projects/project3.html",
+    "title": "Client Report - SWL for Data Science",
+    "section": "",
+    "text": "Although baseball salaries continue to increase, the teams continue to be neck to neck in the Major League Baseball rankings. In my evaluations of the Texas Rangers and Atlanta Braves, I found that although one outpaced the other in salaries, the other continued to be a formidable threat, even beating them in rank.\nAddtionally, average hitting rate can be a deceptive statistic. Players with more at-bats tend to have lower average hitting rates. Several players from years such as 1969, 1995, and 2008 had 100% hitting rates-because they only hit once. This could present a false sense of skill to players who hit less, and a lack of skill to players who hit more often.\n\n\nRead and format project data\nsqlite_file = 'lahmansbaseballdb.sqlite'\ncon = sqlite3.connect(sqlite_file)"
+  },
+  {
+    "objectID": "Projects/project3.html#elevator-pitch",
+    "href": "Projects/project3.html#elevator-pitch",
+    "title": "Client Report - SWL for Data Science",
+    "section": "",
+    "text": "Although baseball salaries continue to increase, the teams continue to be neck to neck in the Major League Baseball rankings. In my evaluations of the Texas Rangers and Atlanta Braves, I found that although one outpaced the other in salaries, the other continued to be a formidable threat, even beating them in rank.\nAddtionally, average hitting rate can be a deceptive statistic. Players with more at-bats tend to have lower average hitting rates. Several players from years such as 1969, 1995, and 2008 had 100% hitting rates-because they only hit once. This could present a false sense of skill to players who hit less, and a lack of skill to players who hit more often.\n\n\nRead and format project data\nsqlite_file = 'lahmansbaseballdb.sqlite'\ncon = sqlite3.connect(sqlite_file)"
+  },
+  {
+    "objectID": "Projects/project3.html#sql-baseball-query",
+    "href": "Projects/project3.html#sql-baseball-query",
+    "title": "Client Report - SWL for Data Science",
+    "section": "1. SQL Baseball Query",
+    "text": "1. SQL Baseball Query\nWrite an SQL query to create a new dataframe about baseball players who attended BYU-Idaho. The new table should contain five columns: playerID, schoolID, salary, and the yearID/teamID associated with each salary. Order the table by salary (highest to lowest) and print out the table in your report.\n\n\nQuery for players who went to BYU-I\nq = '''\n    SELECT \n      collegeplaying.playerid, \n      collegeplaying.schoolid, \n      salaries.salary, \n      salaries.yearid, \n      salaries.teamid\n    FROM collegeplaying\n      JOIN salaries\n      ON collegeplaying.playerid = salaries.playerid\n    WHERE schoolid ==\n    \"idbyuid\"\n    ORDER BY salary DESC\n    '''\n\nresults = pd.read_sql_query(q, con)\nresults\n\n\n\n\n\n\n\n\n\nplayerID\nschoolID\nsalary\nyearID\nteamID\n\n\n\n\n0\nlindsma01\nidbyuid\n4000000.0\n2014\nCHA\n\n\n1\nlindsma01\nidbyuid\n4000000.0\n2014\nCHA\n\n\n2\nlindsma01\nidbyuid\n3600000.0\n2012\nBAL\n\n\n3\nlindsma01\nidbyuid\n3600000.0\n2012\nBAL\n\n\n4\nlindsma01\nidbyuid\n2800000.0\n2011\nCOL\n\n\n5\nlindsma01\nidbyuid\n2800000.0\n2011\nCOL\n\n\n6\nlindsma01\nidbyuid\n2300000.0\n2013\nCHA\n\n\n7\nlindsma01\nidbyuid\n2300000.0\n2013\nCHA\n\n\n8\nlindsma01\nidbyuid\n1625000.0\n2010\nHOU\n\n\n9\nlindsma01\nidbyuid\n1625000.0\n2010\nHOU\n\n\n10\nstephga01\nidbyuid\n1025000.0\n2001\nSLN\n\n\n11\nstephga01\nidbyuid\n1025000.0\n2001\nSLN\n\n\n12\nstephga01\nidbyuid\n900000.0\n2002\nSLN\n\n\n13\nstephga01\nidbyuid\n900000.0\n2002\nSLN\n\n\n14\nstephga01\nidbyuid\n800000.0\n2003\nSLN\n\n\n15\nstephga01\nidbyuid\n800000.0\n2003\nSLN\n\n\n16\nstephga01\nidbyuid\n550000.0\n2000\nSLN\n\n\n17\nstephga01\nidbyuid\n550000.0\n2000\nSLN\n\n\n18\nlindsma01\nidbyuid\n410000.0\n2009\nFLO\n\n\n19\nlindsma01\nidbyuid\n410000.0\n2009\nFLO\n\n\n20\nlindsma01\nidbyuid\n395000.0\n2008\nFLO\n\n\n21\nlindsma01\nidbyuid\n395000.0\n2008\nFLO\n\n\n22\nlindsma01\nidbyuid\n380000.0\n2007\nFLO\n\n\n23\nlindsma01\nidbyuid\n380000.0\n2007\nFLO\n\n\n24\nstephga01\nidbyuid\n215000.0\n1999\nSLN\n\n\n25\nstephga01\nidbyuid\n215000.0\n1999\nSLN\n\n\n26\nstephga01\nidbyuid\n185000.0\n1998\nPHI\n\n\n27\nstephga01\nidbyuid\n185000.0\n1998\nPHI\n\n\n28\nstephga01\nidbyuid\n150000.0\n1997\nPHI\n\n\n29\nstephga01\nidbyuid\n150000.0\n1997\nPHI"
+  },
+  {
+    "objectID": "Projects/project3.html#batting-average",
+    "href": "Projects/project3.html#batting-average",
+    "title": "Client Report - SWL for Data Science",
+    "section": "2. Batting average",
+    "text": "2. Batting average\n\n2a.\nWrite an SQL query that provides playerID, yearID, and batting average for players with at least 1 at bat that year. Sort the table from highest batting average to lowest, and then by playerid alphabetically. Show the top 5 results in your report.\n\n\nQuery for batting average for players with at least 1 at bat\nq = '''\n    SELECT \n      battingpost.playerID,\n      battingpost.yearID,\n      battingpost.H,\n      battingpost.AB\n    FROM battingpost\n    WHERE battingpost.AB &gt; 1\n    '''\n\nresults = pd.read_sql_query(q, con)\nresults['AVG'] = results['H'] / results['AB']\nresults = results.sort_values('AVG', ascending=False)\nresults[['playerID', 'yearID', 'AVG']].head(5)\n\n\n\n\n\n\n\n\n\nplayerID\nyearID\nAVG\n\n\n\n\n2064\ndalrycl01\n1969\n1.0\n\n\n5514\ncairomi01\n2002\n1.0\n\n\n6694\nmyersbr01\n2008\n1.0\n\n\n4235\nharrile01\n1995\n1.0\n\n\n5615\nmohrdu01\n2002\n1.0\n\n\n\n\n\n\n\n\n\n2b.\nUse the same query as above, but only include players with at least 10 at bats that year. Print the top 5 results.\n\n\nQuery for batting average for players with at least 10 at bats\nq = '''\n    SELECT \n      battingpost.playerID,\n      battingpost.yearID, \n      battingpost.H,\n      battingpost.AB\n    FROM battingpost\n    WHERE battingpost.AB &gt; 10\n    '''\n\nresults = pd.read_sql_query(q, con)\nresults['AVG'] = results['H'] / results['AB']\nresults = results.sort_values('AVG', ascending=False)\nresults[['playerID', 'yearID', 'AVG']].head(5)\n\n\n\n\n\n\n\n\n\nplayerID\nyearID\nAVG\n\n\n\n\n2204\nhatchbi01\n1990\n0.750000\n\n\n2314\nmcclell01\n1992\n0.727273\n\n\n4324\nortizda01\n2013\n0.687500\n\n\n2144\nclarkwi02\n1989\n0.650000\n\n\n2151\ngracema01\n1989\n0.647059\n\n\n\n\n\n\n\n\n\n2c.\nNow calculate the batting average for players over their entire careers (all years combined). Only include players with at least 100 at bats, and print the top 5 results.\n\n\nQuery for calculating total batting average\nq = '''\n    SELECT \n      battingpost.playerID,\n      battingpost.yearID,\n      SUM(battingpost.h) AS total_h,\n      SUM(battingpost.ab) AS total_ab\n    FROM battingpost\n    GROUP BY battingpost.playerid \n    HAVING total_ab &gt; 100\n    '''\n\nresults = pd.read_sql_query(q, con)\nresults['AVG'] = results['total_h'] / results['total_ab']\nresults = results.sort_values('AVG', ascending=False)\nresults[['playerID', 'yearID', 'AVG']].head(5)\n\n\n\n\n\n\n\n\n\nplayerID\nyearID\nAVG\n\n\n\n\n181\nmolitpa01\n1981\n0.367521\n\n\n104\ngehrilo01\n1926\n0.361345\n\n\n186\nmunsoth01\n1976\n0.356589\n\n\n243\nsandopa01\n2010\n0.344156\n\n\n85\nerstada01\n2002\n0.338983"
+  },
+  {
+    "objectID": "Projects/project3.html#baseball-team-comparison",
+    "href": "Projects/project3.html#baseball-team-comparison",
+    "title": "Client Report - SWL for Data Science",
+    "section": "3. Baseball Team Comparison",
+    "text": "3. Baseball Team Comparison\nPick any two baseball teams and compare them using a metric of your choice (average salary, home runs, number of wins, etc). Write an SQL query to get the data you need, then make a graph using Plotly Express to visualize the comparison. What do you learn?\nThe two baseball teams I chose to compare were the Atlanta Braves and Texas Dodgers.\n\n\nPrepare information for exploration\nq = '''\n    SELECT DISTINCT salaries.teamId, salaries.playerId, salaries.salary, salaries.yearID\n    FROM salaries\n    WHERE salaries.teamID = \"ATL\" OR salaries.teamID = \"TEX\"\n    '''\n\nresults = pd.read_sql_query(q, con)\nresults\n\n\n\n\n\n\n\n\n\nteamID\nplayerID\nsalary\nyearID\n\n\n\n\n0\nATL\nbarkele01\n870000.0\n1985\n\n\n1\nATL\nbedrost01\n550000.0\n1985\n\n\n2\nATL\nbenedbr01\n545000.0\n1985\n\n\n3\nATL\ncampri01\n633333.0\n1985\n\n\n4\nATL\nceronri01\n625000.0\n1985\n\n\n...\n...\n...\n...\n...\n\n\n1824\nTEX\nruary01\n510120.0\n2016\n\n\n1825\nTEX\nruggiju01\n1650000.0\n2016\n\n\n1826\nTEX\nschepta01\n900000.0\n2016\n\n\n1827\nTEX\ntollesh01\n3275000.0\n2016\n\n\n1828\nTEX\nwilheto01\n3100000.0\n2016\n\n\n\n\n1829 rows × 4 columns\n\n\n\nAs can be seen in this chart, the player salaries of both teams are very skewed in the positive direciton. There are many outliers, with Texas having the higher salaries. Atlanta tops just over 15M, while Texas nearly approaches 25M.\n\n\nCompare the salaries of the players by team\npx.box(results, y=\"salary\", color=\"teamID\", title=\"Salary comparison by team\")\n\n\n\n                                                \n\n\nI wanted a closer look at the actual average salaries. Here, we can see that the average salary for Atlanta is actually a little higher, but not by much. Both Teams hover around 2M.\n\n\nCompare the salaries of the players by team\naverage_salary = results.groupby('teamID')['salary'].mean().reset_index()\n\npx.bar(average_salary, x=\"teamID\", y=\"salary\", color=\"teamID\", title=\"Average salary by team\")\n\n\n\n                                                \n\n\nNext, I wanted to see if the average salaries of each team were changing much by year.\n\n\nCompare the salaries of the two teams by year\naverage_salary = results.groupby(['yearID', 'teamID'])['salary'].mean().reset_index()\nsalary_by_year = px.line(average_salary, x=\"yearID\", y=\"salary\", color=\"teamID\", title=\"Average salary by year\")\nsalary_by_year.show()\n\n\n\n                                                \n\n\nFinally, I wanted to see if there was any sort of coorelation to the wins per year of either team.\n\n\nPrepare information for exploration\nq = '''\n    SELECT teams.teamId, teams.yearID, teams.teamRank\n    FROM teams\n    WHERE teams.teamID = \"ATL\" OR teams.teamID = \"TEX\"\n    '''\n\nteam_results = pd.read_sql_query(q, con)\n\nteam_rank = team_results.groupby(['teamID', 'yearID'])['teamRank'].mean().reset_index()\nrank_by_year = px.line(team_rank, x=\"yearID\", y=\"teamRank\", color=\"teamID\", title=\"Team rank by year\")\n\nrank_by_year.update_yaxes(autorange=\"reversed\")\n\nrank_by_year.show()\n\n\n\n                                                \n\n\nFrom what I’ve been able to evaluate, the result is… not clear. Although salaries have increased astronomicaly across both teams, neither team have changed much. Since 2000 neither teams haven’t dropped beneath around 65 wins a year, but this may be because they’re simply playing more games.\nAlthough will take further data exploration to come to a more concrete conclusion, one interesting takeaway is that although in 2019 Texas’s average salary nearly doubled Atlanta, Atlanta still outranked Texas. It would be interesting what has happened since 2019."
+  },
+  {
+    "objectID": "Projects/project5.html",
+    "href": "Projects/project5.html",
+    "title": "Client Report - Project 05",
+    "section": "",
+    "text": "Through cleaning and organizing the information given, I was able to create a model that can predict whether an individual’s income is above or below $50,000, although with not a very high accuracy.\n\n\nRead and format project data\ndf = pd.read_csv(\"https://raw.githubusercontent.com/fivethirtyeight/data/master/star-wars-survey/StarWars.csv\", encoding='unicode_escape')"
+  },
+  {
+    "objectID": "Projects/project5.html#elevator-pitch",
+    "href": "Projects/project5.html#elevator-pitch",
+    "title": "Client Report - Project 05",
+    "section": "",
+    "text": "Through cleaning and organizing the information given, I was able to create a model that can predict whether an individual’s income is above or below $50,000, although with not a very high accuracy.\n\n\nRead and format project data\ndf = pd.read_csv(\"https://raw.githubusercontent.com/fivethirtyeight/data/master/star-wars-survey/StarWars.csv\", encoding='unicode_escape')"
+  },
+  {
+    "objectID": "Projects/project5.html#clean-table",
+    "href": "Projects/project5.html#clean-table",
+    "title": "Client Report - Project 05",
+    "section": "1. Clean table",
+    "text": "1. Clean table\nShorten the column names and clean them up for easier use with pandas. Provide a table or list that exemplifies how you fixed the names.\nThe following list gives the list of each column, and associated qualities.\n\n\nClean data\n# Create an empty dataframe\ndf2 = pd.DataFrame()\n\n# Drop the first row: they're just column headers.\ndf = df.iloc[1: , :]\n\n# Don't save Id, we don't care about it\n\n# seen_film (Seen ANY of the star wars movies)\ndf2['seen_film'] = df['Have you seen any of the 6 films in the Star Wars franchise?'].map(\n  lambda x: True if x == \"Yes\" else False if x == \"No\" else False )\n\n# isFan\ndf2['is_fan'] = df['Do you consider yourself to be a fan of the Star Wars film franchise?'].map(\n  lambda x: True if x == \"Yes\" else False if x == \"No\" else False )\n\n# Episode 1\ndf2['ep_1'] = df['Which of the following Star Wars films have you seen? Please select all that apply.'].map(\n  lambda x: True if x == \"Star Wars: Episode I  The Phantom Menace\" else False\n)\n\n# Episode 2\ndf2['ep_2'] = df['Unnamed: 4'].map(\n  lambda x: True if x == \"Star Wars: Episode II  Attack of the Clones\" else False\n)\n\n# Episode 3\ndf2['ep_3'] = df['Unnamed: 5'].map(\n  lambda x: True if x == \"Star Wars: Episode III  Revenge of the Sith\" else False\n)\n\n# Episode 4\ndf2['ep_4'] = df['Unnamed: 6'].map(\n  lambda x: True if x == \"Star Wars: Episode IV  A New Hope\" else False\n)\n\n# Episode 5\ndf2['ep_5'] = df['Unnamed: 7'].map(\n  lambda x: True if x == \"Star Wars: Episode V The Empire Strikes Back\" else False\n)\n\n# Episode 6\ndf2['ep_6'] = df['Unnamed: 8'].map(\n  lambda x: True if x == \"Star Wars: Episode VI Return of the Jedi\" else False\n)\n\n# Episode rank. Replace nan values with 3\n\n# Episode 1 rank\ndf2['ep_1_rank'] = df['Please rank the Star Wars films in order of preference with 1 being your favorite film in the franchise and 6 being your least favorite film.'].fillna(3).astype(int)\n\n# Episode 2 rank\ndf2['ep_2_rank'] = df['Unnamed: 10'].fillna(3).astype(int)\n\n# Episode 3 rank\ndf2['ep_3_rank'] = df['Unnamed: 11'].fillna(3).astype(int)\n\n# Episode 4 rank\ndf2['ep_4_rank'] = df['Unnamed: 12'].fillna(3).astype(int)\n\n# Episode 5 rank\ndf2['ep_5_rank'] = df['Unnamed: 13'].fillna(3).astype(int)\n\n# Episode 6 rank\ndf2['ep_6_rank'] = df['Unnamed: 14'].fillna(3).astype(int)\n\ndef shortenOpinion(opinion):\n  if (opinion == \"Very favorably\"):\n    return \"5\"\n  elif (opinion == \"Somewhat favorably\"):\n    return \"4\"\n  elif (opinion == \"Neither favorably nor unfavorably (neutral)\"):\n    return \"3\"\n  elif (opinion == \"Somewhat unfavorably\"):\n    return \"2\"\n  elif (opinion == \"Very unfavorably\"):\n    return \"1\"\n  else: # \"Unfamiliar (N/A)\"\n    return \"0\"\n\n# Character favorability\ndf2['han'] = df['Please state whether you view the following characters favorably, unfavorably, or are unfamiliar with him/her.'].map(lambda x: shortenOpinion(x))\ndf2['luke'] = df['Unnamed: 16'].map(lambda x: shortenOpinion(x))\ndf2['leia'] = df['Unnamed: 17'].map(lambda x: shortenOpinion(x))\ndf2['anakin'] = df['Unnamed: 18'].map(lambda x: shortenOpinion(x))\ndf2['obi_wan'] = df['Unnamed: 19'].map(lambda x: shortenOpinion(x))\ndf2['palp'] = df['Unnamed: 20'].map(lambda x: shortenOpinion(x))\ndf2['vader'] = df['Unnamed: 21'].map(lambda x: shortenOpinion(x))\ndf2['lando'] = df['Unnamed: 22'].map(lambda x: shortenOpinion(x))\ndf2['boba'] = df['Unnamed: 23'].map(lambda x: shortenOpinion(x))\ndf2['c-3p0'] = df['Unnamed: 24'].map(lambda x: shortenOpinion(x))\ndf2['r2_d2'] = df['Unnamed: 25'].map(lambda x: shortenOpinion(x))\ndf2['jar_jar'] = df['Unnamed: 26'].map(lambda x: shortenOpinion(x))\ndf2['padme'] = df['Unnamed: 27'].map(lambda x: shortenOpinion(x))\ndf2['yoda'] = df['Unnamed: 28'].map(lambda x: shortenOpinion(x))\n\n# Who shot first?\n# Fill nan values with \"I don't understand this question\"\ndf2['first'] = df['Which character shot first?'].fillna(\"I don't understand this question\").astype(str)\n\n# Expanded universe?\n# If nan, replace with \"No\"\ndf2['eu'] = df['Are you familiar with the Expanded Universe?'].fillna('No').astype(str)\n\n# Ignore star trek column\n\n# Change column titles; we'll modify them more later\n# If value is nan, assign to one of the values randomly.\ndf2['gender'] = df['Gender'].fillna(random.choice([\"Male\", \"Female\"]))\ndf2['age'] = df['Age'].fillna(random.choice(['18-29', '30-44', '&gt; 60', '45-60']))\ndf2['income'] = df['Household Income'].fillna(random.choice(['$0 - $24,999', '$25,000 - $49,999', '$50,000 - $99,999', '$100,000 - $149,999', '$150,000+']))\ndf2['education'] = df['Education'].fillna(random.choice(['High school degree', 'Some college or Associate degree', 'Bachelor degree', 'Graduate degree', 'Less than high school degree']))\ndf2['location'] = df['Location (Census Region)'].fillna(random.choice(['South Atlantic', 'Pacific', 'Mountain', 'East North Central', 'West South Central', 'New England', 'Middle Atlantic', 'West North Central', 'East South Central']))\n\ndf2.info()\n\n\n&lt;class 'pandas.core.frame.DataFrame'&gt;\nRangeIndex: 1186 entries, 1 to 1186\nData columns (total 35 columns):\n #   Column     Non-Null Count  Dtype \n---  ------     --------------  ----- \n 0   seen_film  1186 non-null   bool  \n 1   is_fan     1186 non-null   bool  \n 2   ep_1       1186 non-null   bool  \n 3   ep_2       1186 non-null   bool  \n 4   ep_3       1186 non-null   bool  \n 5   ep_4       1186 non-null   bool  \n 6   ep_5       1186 non-null   bool  \n 7   ep_6       1186 non-null   bool  \n 8   ep_1_rank  1186 non-null   int32 \n 9   ep_2_rank  1186 non-null   int32 \n 10  ep_3_rank  1186 non-null   int32 \n 11  ep_4_rank  1186 non-null   int32 \n 12  ep_5_rank  1186 non-null   int32 \n 13  ep_6_rank  1186 non-null   int32 \n 14  han        1186 non-null   object\n 15  luke       1186 non-null   object\n 16  leia       1186 non-null   object\n 17  anakin     1186 non-null   object\n 18  obi_wan    1186 non-null   object\n 19  palp       1186 non-null   object\n 20  vader      1186 non-null   object\n 21  lando      1186 non-null   object\n 22  boba       1186 non-null   object\n 23  c-3p0      1186 non-null   object\n 24  r2_d2      1186 non-null   object\n 25  jar_jar    1186 non-null   object\n 26  padme      1186 non-null   object\n 27  yoda       1186 non-null   object\n 28  first      1186 non-null   object\n 29  eu         1186 non-null   object\n 30  gender     1186 non-null   object\n 31  age        1186 non-null   object\n 32  income     1186 non-null   object\n 33  education  1186 non-null   object\n 34  location   1186 non-null   object\ndtypes: bool(8), int32(6), object(21)\nmemory usage: 231.8+ KB"
+  },
+  {
+    "objectID": "Projects/project5.html#clean-and-format-data",
+    "href": "Projects/project5.html#clean-and-format-data",
+    "title": "Client Report - Project 05",
+    "section": "2. Clean and format data",
+    "text": "2. Clean and format data\nClean and format the data so that it can be used in a machine learning model. As you format the data, you should complete each item listed below. In your final report provide example(s) of the reformatted data with a short description of the changes made.\n\nFilter the dataset to respondents that have seen at least one film.\n\nWe removed every respondent that HAS NOT seen at least ONE film. Some of the entries marked themselves as “Yes”, though they did not mark any of the films as seen, so we dropped those as well.\n\n\nFilter dataset\n# 1186\n\ndf2 = df2[(df2['seen_film'] == True) & (df2[['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6']].any(axis=1))]\n\n(len(df2.index) / 1186)\n\nmale_seen = df2[df2['gender'] == 'Male']\nmale_total = df[df['Gender'] == 'Male']\n(len(male_seen.index) / len(male_total.index))\n\n\n0.8490945674044266\n\n\n\nCreate a new column that converts the age ranges to a single number. Drop the age range categorical column.\n\nNext, we converted the value of each rangeto a single number, to make it a quantitative value. I took the lowest age in range, so “18-29” became 18, “30-44” became 30, and so forth.\n\n\nConvert age ranges to single number. Drop age range categorical column.\n# Take lowest age in range\ndf2['age_new'] = df2['age'].map(\n    lambda x: 18 if x == \"18-29\" else 30 if x == \"30-44\" else 45 if x == '45-60' else 60 if x == \"&gt; 60\" else 39  # nan values go to average age, 39\n  )\n# Remove age column\ndf2 = df2.drop('age', axis=1)\n\n\n\nCreate a new column that converts the education groupings to a single number. Drop the school categorical column\n\nI changed the education groupings to a single number, and named it “education_new”, in numerical order. “Less than high school degree” is 0, while “Graduate degree” is 4.\n\n\nConvert education to single number. Drop school categorical column.\n# Assign values in ascending order\ndf2['education_new'] = df2['education'].map(\n    lambda x: 0 if x == \"Less than high school degree\" else 1 if x == \"High school degree\" else 2 if x == 'Some college or Associate degree' else 3 if x == \"Bachelor degree\" else 4 if x == \"Graduate degree\" else 0 # Assume High school if nan (most people graduate from high school?)\n  )\n# Remove education column\ndf2 = df2.drop('education', axis=1)\n\n\n\nCreate a new column that converts the income ranges to a single number. Drop the income range categorical column.\n\nWhen converting the categories, I used the median value of each range. “$0 = $24,999” became 12,500, “$25,000 - $49,999” became 37,500, and so forth.\n\n\nConvert income ranges to single number. Drop income range categorical column\n# Assigne income as halfway of each range\ndf2['income_new'] = df2['income'].map(\n    lambda x:\n      12500 if x == \"$0 - $24,999\" else 37500 if x == \"$25,000 - $49,999\" else 75000 if x == \"$50,000 - $99,999\" else 125000 if x == \"$100,000 - $149,999\" else 150000 if x == '$150,000' else 75000 # nan values go to average age, 39\n  )\n# Remove age column\ndf2 = df2.drop('income', axis=1)\n\n\n\nCreate your target (also known as “y” or “label”) column based on the new income range column.\n\nI made my target column a simple boolean column: True for above 50,000, and False for less.\n\n\nCreate target column based on new income column\ndf2[\"y\"] = df2[\"income_new\"].map(lambda x:\n True if x &gt;= 50000 else False)\n\n\n\nOne-hot encode all remaining categorical columns.\n\nI one-hot encoded every column not already interacted with.\n\n\nOne-hot encode remaining columns\ndf3 = pd.get_dummies(df2, columns=[\"seen_film\", \"is_fan\", \"ep_1\", \"ep_2\", \"ep_3\", \"ep_4\", \"ep_5\", \"ep_6\", \"age_new\", \"han\", \"luke\", \"leia\", \"anakin\", \"obi_wan\", \"palp\", 'vader', 'lando', 'boba', 'c-3p0', 'r2_d2', 'jar_jar', 'padme', 'yoda', \"first\", \"eu\", \"gender\", \"location\"])"
+  },
+  {
+    "objectID": "Projects/project5.html#validate-data",
+    "href": "Projects/project5.html#validate-data",
+    "title": "Client Report - Project 05",
+    "section": "3. Validate data",
+    "text": "3. Validate data\nValidate that the data provided on GitHub lines up with the article by recreating 2 of the visuals from the article.\n\n\nGraph which movies have been seen by percentage\ntotal_counts = df2[['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6']].count()\n\n# Calculate the ratio of \"true\" values to the total count for each column\nratios = df2[['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6']].sum() / total_counts\n\n# Create a bar plot using Plotly Express\nfig = px.bar(\n    x=['ep_1', 'ep_2', 'ep_3', 'ep_4', 'ep_5', 'ep_6'],\n    y=ratios,\n    title='Movies by percent viewership',\n)\n\nfig.update_layout(\n    xaxis_title='Movie',\n    yaxis_title='Percent Viewership',\n)\n\n# Show the plot\nfig.show()\n\n\n\n                                                \n\n\n\n\nGraph who shot first\nfig = px.histogram(df, x=['Which character shot first?'])\n\nfig.show()\n\n\n\n                                                \n\n\nThe first graph lines up correctly with the article, with the viewerships per episode being about %80, %68, %66, %73, %91, and %88.\nThe second graph lines up with what was in the article, where it went Han, “I don’t understand”, and Greedo, in descending order."
+  },
+  {
+    "objectID": "Projects/project5.html#build-model",
+    "href": "Projects/project5.html#build-model",
+    "title": "Client Report - Project 05",
+    "section": "4. Build model",
+    "text": "4. Build model\nBuild a machine learning model that predicts whether a person makes more than $50k. Describe your model and report the accuracy.\n\n\nCreate the machine learning model, and test the accuracy\nX = df3.drop([\"y\", \"income_new\"], axis=1)\n# Gender isn't helpful\ny = pd.DataFrame(df3[\"y\"])\n\ntrain_X, test_X, train_y, test_y = train_test_split(X, y, random_state=34)\n\nmodel = DecisionTreeClassifier(random_state=12)\nmodel.fit(train_X, train_y)\n\npred = model.predict(test_X)\npred\n\nprint(accuracy_score(test_y, pred))\ncm = confusion_matrix(test_y, pred)\ndisp = ConfusionMatrixDisplay(confusion_matrix=cm)\ndisp.plot()\n\n\n0.507177033492823\n\n\n&lt;sklearn.metrics._plot.confusion_matrix.ConfusionMatrixDisplay at 0x1e4b17eb9d0&gt;\n\n\n\n\n\nThe model I created is somewhat. At first I was using an XGBoostRegressor model, but unfortunately, I struggled to find a way to predict income based on how well someone knows Star Wars. I switched to using a DecisionTreeClassifier and the results increased dramatically.\nAs you can see in the above confusion matrix, there are many more false positives and false negatives than I’d like, making this model not very useful."
+  },
+  {
+    "objectID": "resume.html",
+    "href": "resume.html",
+    "title": "Tad Decker’s Resume",
+    "section": "",
+    "text": "Student in computer science, passionate developer, and eager learner.\n\nLinkedIn | tdecker234@gmail.com | GitHub\n\n\n\n2023–Pressent Brigham Young University – Idaho, Rexburg, ID\n2018–2023 Brigham Young University, Provo, UT\n\n\n\n2024–Present Teaching Assistant, Brigham Young University–Idaho, Provo, UT - Developed a journaling mobile application in React Ionic, showcasing strong problem-solving skills and driven self-motivation - Provided feedback in detailed reports, helping facilitate crucial decision making in creating a future class curriculum - Extensively documented my development process, adding an exhaustive report of the pros, cons, and unique attributes of React Ionic\n2022 - 2023 Full Stack Developer, Brigham Young University Office of IT, Provo, UT - Significantly contributed to the development of services for the BYU Honors Program, streamlining the application and thesis process. - Successfully migrated major resources from legacy systems to modern services, reducing technical debt and enhancing security - Worked with AWS products including EC2, Lambda, Fargate, and DynamoDB\n\n\n\n2021-2022 End-User Support, Brigham Young University, Provo, UT\n2018-2020 Service Missionary, Nashville Tennessee"
+  },
+  {
+    "objectID": "resume.html#education",
+    "href": "resume.html#education",
+    "title": "Tad Decker’s Resume",
+    "section": "",
+    "text": "2023–Pressent Brigham Young University – Idaho, Rexburg, ID\n2018–2023 Brigham Young University, Provo, UT"
+  },
+  {
+    "objectID": "resume.html#related-experience",
+    "href": "resume.html#related-experience",
+    "title": "Tad Decker’s Resume",
+    "section": "",
+    "text": "2024–Present Teaching Assistant, Brigham Young University–Idaho, Provo, UT - Developed a journaling mobile application in React Ionic, showcasing strong problem-solving skills and driven self-motivation - Provided feedback in detailed reports, helping facilitate crucial decision making in creating a future class curriculum - Extensively documented my development process, adding an exhaustive report of the pros, cons, and unique attributes of React Ionic\n2022 - 2023 Full Stack Developer, Brigham Young University Office of IT, Provo, UT - Significantly contributed to the development of services for the BYU Honors Program, streamlining the application and thesis process. - Successfully migrated major resources from legacy systems to modern services, reducing technical debt and enhancing security - Worked with AWS products including EC2, Lambda, Fargate, and DynamoDB"
+  },
+  {
+    "objectID": "resume.html#service-and-work-history",
+    "href": "resume.html#service-and-work-history",
+    "title": "Tad Decker’s Resume",
+    "section": "",
+    "text": "2021-2022 End-User Support, Brigham Young University, Provo, UT\n2018-2020 Service Missionary, Nashville Tennessee"
+  },
+  {
+    "objectID": "Templates/DS250_Template.html",
+    "href": "Templates/DS250_Template.html",
+    "title": "Client Report - [Insert Project Title]",
+    "section": "",
+    "text": "Uncomment the entire section to use this template\n\n\n\n\n\n\n Back to top"
+  }
+]
